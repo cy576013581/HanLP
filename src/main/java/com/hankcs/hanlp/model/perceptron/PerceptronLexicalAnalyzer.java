@@ -12,6 +12,7 @@
 package com.hankcs.hanlp.model.perceptron;
 
 import com.hankcs.hanlp.HanLP;
+import com.hankcs.hanlp.dictionary.other.CharTable;
 import com.hankcs.hanlp.model.perceptron.model.LinearModel;
 import com.hankcs.hanlp.model.perceptron.utility.Utility;
 import com.hankcs.hanlp.corpus.document.sentence.Sentence;
@@ -41,7 +42,7 @@ public class PerceptronLexicalAnalyzer extends AbstractLexicalAnalyzer
         }
         if (nerModel != null)
         {
-            neRecognizer = new PerceptionNERecognizer(nerModel);
+            neRecognizer = new PerceptronNERecognizer(nerModel);
             config.ner = true;
         }
         else
@@ -132,6 +133,7 @@ public class PerceptronLexicalAnalyzer extends AbstractLexicalAnalyzer
     public boolean learn(String segmentedTaggedSentence)
     {
         Sentence sentence = Sentence.create(segmentedTaggedSentence);
+        CharTable.normalize(sentence);
         if (!getPerceptronSegmenter().learn(sentence)) return false;
         if (posTagger != null && !getPerceptronPOSTagger().learn(sentence)) return false;
         if (neRecognizer != null && !getPerceptionNERecognizer().learn(sentence)) return false;
@@ -163,9 +165,9 @@ public class PerceptronLexicalAnalyzer extends AbstractLexicalAnalyzer
      *
      * @return
      */
-    public PerceptionNERecognizer getPerceptionNERecognizer()
+    public PerceptronNERecognizer getPerceptionNERecognizer()
     {
-        return (PerceptionNERecognizer) neRecognizer;
+        return (PerceptronNERecognizer) neRecognizer;
     }
 
 }

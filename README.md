@@ -9,7 +9,7 @@ HanLP: Han Language Processing
 
 ------
 
-**HanLP**是由一系列模型与算法组成的Java工具包，目标是普及自然语言处理在生产环境中的应用。**HanLP**具备功能完善、性能高效、架构清晰、语料时新、可自定义的特点。
+**HanLP**是一系列模型与算法组成的NLP工具包，由大快搜索主导并完全开源，目标是普及自然语言处理在生产环境中的应用。**HanLP**具备功能完善、性能高效、架构清晰、语料时新、可自定义的特点。
 
 **HanLP**提供下列功能：
 
@@ -26,13 +26,13 @@ HanLP: Han Language Processing
         * [兼容繁体中文](https://github.com/hankcs/HanLP/blob/master/src/test/java/com/hankcs/demo/DemoPerceptronLexicalAnalyzer.java#L29)
         * [训练用户自己的领域模型](https://github.com/hankcs/HanLP/wiki)
 * 词性标注
-    * [HMM词性标注](https://github.com/hankcs/HanLP#3-nlp%E5%88%86%E8%AF%8D)（速度快）
-    * [感知机词性标注](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)、[CRF词性标注](https://github.com/hankcs/HanLP#6-crf%E5%88%86%E8%AF%8D)（精度高）
+    * [HMM词性标注](https://github.com/hankcs/HanLP/blob/master/src/main/java/com/hankcs/hanlp/seg/Segment.java#L584)（速度快）
+    * [感知机词性标注](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)、[CRF词性标注](https://github.com/hankcs/HanLP/wiki/CRF%E8%AF%8D%E6%B3%95%E5%88%86%E6%9E%90)（精度高）
 * 命名实体识别
     * 基于HMM角色标注的命名实体识别 （速度快）
         * [中国人名识别](https://github.com/hankcs/HanLP#9-%E4%B8%AD%E5%9B%BD%E4%BA%BA%E5%90%8D%E8%AF%86%E5%88%AB)、[音译人名识别](https://github.com/hankcs/HanLP#10-%E9%9F%B3%E8%AF%91%E4%BA%BA%E5%90%8D%E8%AF%86%E5%88%AB)、[日本人名识别](https://github.com/hankcs/HanLP#11-%E6%97%A5%E6%9C%AC%E4%BA%BA%E5%90%8D%E8%AF%86%E5%88%AB)、[地名识别](https://github.com/hankcs/HanLP#12-%E5%9C%B0%E5%90%8D%E8%AF%86%E5%88%AB)、[实体机构名识别](https://github.com/hankcs/HanLP#13-%E6%9C%BA%E6%9E%84%E5%90%8D%E8%AF%86%E5%88%AB)
     * 基于线性模型的命名实体识别（精度高）
-        * [感知机命名实体识别](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)、[CRF命名实体识别](https://github.com/hankcs/HanLP#6-crf%E5%88%86%E8%AF%8D)
+        * [感知机命名实体识别](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)、[CRF命名实体识别](https://github.com/hankcs/HanLP/wiki/CRF%E8%AF%8D%E6%B3%95%E5%88%86%E6%9E%90)
 * 关键词提取
     * [TextRank关键词提取](https://github.com/hankcs/HanLP#14-%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8F%90%E5%8F%96)
 * 自动摘要
@@ -53,7 +53,8 @@ HanLP: Han Language Processing
 * [word2vec](https://github.com/hankcs/HanLP/wiki/word2vec)
     * 词向量训练、加载、词语相似度计算、语义运算、查询、KMeans聚类
     * 文档语义相似度计算
-* 语料库工具
+* [语料库工具](https://github.com/hankcs/HanLP/tree/master/src/main/java/com/hankcs/hanlp/corpus)
+    - 默认模型训练自小型语料库，鼓励用户自行训练。所有模块提供训练接口，语料可参考[OpenCorpus](https://github.com/hankcs/OpenCorpus)。
 
 在提供丰富功能的同时，**HanLP**内部模块坚持低耦合、模型坚持惰性加载、服务坚持静态提供、词典坚持明文发布，使用非常方便，同时自带一些语料处理工具，帮助用户训练自己的模型。
 
@@ -61,7 +62,7 @@ HanLP: Han Language Processing
 
 ## 项目主页
 
-[在线演示](http://hanlp.hankcs.com/)、[Python调用](https://github.com/hankcs/pyhanlp)、[wiki](https://github.com/hankcs/HanLP/wiki)、[Solr及Lucene插件](https://github.com/hankcs/hanlp-lucene-plugin)、[国内下载](http://hanlp.dksou.com/HanLP.html)。
+[在线演示](http://hanlp.hankcs.com/)、[Python调用](https://github.com/hankcs/pyhanlp)、[Solr及Lucene插件](https://github.com/hankcs/hanlp-lucene-plugin)、[国内下载](http://hanlp.dksou.com/HanLP.html)、[更多信息](https://github.com/hankcs/HanLP/wiki)。
 
 ------
 
@@ -75,7 +76,7 @@ HanLP: Han Language Processing
 <dependency>
     <groupId>com.hankcs</groupId>
     <artifactId>hanlp</artifactId>
-    <version>portable-1.6.2</version>
+    <version>portable-1.6.6</version>
 </dependency>
 ```
 
@@ -85,7 +86,7 @@ HanLP: Han Language Processing
 
 **HanLP**将数据与程序分离，给予用户自定义的自由。
 
-#### 1、下载：[data.zip](https://github.com/hankcs/HanLP/releases) 
+#### 1、下载：[data.zip](http://nlp.hankcs.com/download.php?file=data) 
 
 下载后解压到任意目录，接下来通过配置文件告诉HanLP数据包的位置。
 
@@ -101,7 +102,7 @@ HanLP: Han Language Processing
 - 模型跟词典没有绝对的区别，隐马模型被做成人人都可以编辑的词典形式，不代表它不是模型。
 - GitHub代码库中已经包含了data.zip中的词典，直接编译运行自动缓存即可；模型则需要额外下载。
 
-#### 2、下载jar和配置文件：[hanlp-release.zip](https://github.com/hankcs/HanLP/releases)
+#### 2、下载jar和配置文件：[hanlp-release.zip](http://nlp.hankcs.com/download.php?file=jar)
 
 配置文件的作用是告诉HanLP数据包的位置，只需修改第一行
 
@@ -155,13 +156,13 @@ System.out.println(termList);
 
 ```java
 System.out.println(NLPTokenizer.segment("我新造一个词叫幻想乡你能识别并标注正确词性吗？"));
-// 注意观察两个“希望”的词性，两个“晚霞”的词性
+// 注意观察下面两个“希望”的词性、两个“晚霞”的词性
 System.out.println(NLPTokenizer.analyze("我的希望是希望张晚霞的背影被晚霞映红").translateLabels());
 System.out.println(NLPTokenizer.analyze("支援臺灣正體香港繁體：微软公司於1975年由比爾·蓋茲和保羅·艾倫創立。"));
 ```
 - 说明
   * NLP分词`NLPTokenizer`会执行全部命名实体识别和词性标注。
-  * 欢迎用户在自己的语料上[训练新模型](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)以适应新领域、识别新的命名实体。
+  * 默认模型训练自[98年1月份人民日报语料](https://github.com/hankcs/OpenCorpus/tree/master/pku98)，仅有`183`万字。语料库规模决定实际效果，面向生产环境的语料库应当在千万字量级。欢迎用户在自己的语料上[训练新模型](https://github.com/hankcs/HanLP/wiki/%E7%BB%93%E6%9E%84%E5%8C%96%E6%84%9F%E7%9F%A5%E6%9C%BA%E6%A0%87%E6%B3%A8%E6%A1%86%E6%9E%B6)以适应新领域、识别新的命名实体。
 
 ### 4. 索引分词
 
@@ -752,9 +753,12 @@ HanLP.Config.enableDebug();
 - HanLP产品初始知识产权归上海林原信息科技有限公司所有，任何人和企业可以无偿使用，可以对产品、源代码进行任何形式的修改，可以打包在其他产品中进行销售。
 - 任何使用了HanLP的全部或部分功能、词典、模型的项目、产品或文章等形式的成果必须显式注明HanLP及此项目主页。
 
+### 大快搜索
+- 现在正式由大快搜索主导开发，新模块继续完全开源。
+
 ### 其他版权方
-- 自`1.2.4`后是个人维护，还会接受任何人与任何公司向本项目开源的模块。
-- 充分尊重所有版权方的贡献，本项目不占有这些新模块的版权。
+- 实施上由个人维护，欢迎任何人与任何公司向本项目开源模块。
+- 充分尊重所有版权方的贡献，本项目不占有用户贡献模块的版权。
 
 ### 鸣谢
 感谢下列优秀开源项目：

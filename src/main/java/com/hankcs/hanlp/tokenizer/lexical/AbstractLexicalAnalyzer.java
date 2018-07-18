@@ -20,7 +20,6 @@ import com.hankcs.hanlp.dictionary.CoreDictionary;
 import com.hankcs.hanlp.dictionary.CustomDictionary;
 import com.hankcs.hanlp.dictionary.other.CharTable;
 import com.hankcs.hanlp.model.perceptron.tagset.NERTagSet;
-import com.hankcs.hanlp.model.perceptron.utility.PosTagUtility;
 import com.hankcs.hanlp.seg.CharacterBasedSegment;
 import com.hankcs.hanlp.seg.common.Term;
 
@@ -31,11 +30,77 @@ import java.util.*;
  *
  * @author hankcs
  */
-public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment implements LexicalAnalyzer
+public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements LexicalAnalyzer
 {
     protected Segmenter segmenter;
     protected POSTagger posTagger;
     protected NERecognizer neRecognizer;
+
+    public AbstractLexicalAnalyzer()
+    {
+    }
+
+    public AbstractLexicalAnalyzer(Segmenter segmenter)
+    {
+        this.segmenter = segmenter;
+    }
+
+    public AbstractLexicalAnalyzer(Segmenter segmenter, POSTagger posTagger)
+    {
+        this.segmenter = segmenter;
+        this.posTagger = posTagger;
+    }
+
+    public AbstractLexicalAnalyzer(Segmenter segmenter, POSTagger posTagger, NERecognizer neRecognizer)
+    {
+        this.segmenter = segmenter;
+        this.posTagger = posTagger;
+        this.neRecognizer = neRecognizer;
+    }
+
+    /**
+     * 分词
+     *
+     * @param sentence      文本
+     * @param normalized    正规化后的文本
+     * @param wordList      储存单词列表
+     * @param attributeList 储存用户词典中的词性，设为null表示不查询用户词典
+     */
+    protected void segment(final String sentence, final String normalized, final List<String> wordList, final List<CoreDictionary.Attribute> attributeList)
+    {
+        if (attributeList != null)
+        {
+            final int[] offset = new int[]{0};
+            CustomDictionary.parseLongestText(sentence, new AhoCorasickDoubleArrayTrie.IHit<CoreDictionary.Attribute>()
+            {
+                @Override
+                public void hit(int begin, int end, CoreDictionary.Attribute value)
+                {
+                    if (acceptCustomWord(begin, end, value)) // 将命名实体识别交给下面去做
+                    {
+                        if (begin != offset[0])
+                        {
+                            segmenter.segment(sentence.substring(offset[0], begin), normalized.substring(offset[0], begin), wordList);
+                        }
+                        while (attributeList.size() < wordList.size())
+                            attributeList.add(null);
+                        wordList.add(sentence.substring(begin, end));
+                        attributeList.add(value);
+                        assert wordList.size() == attributeList.size() : "词语列表与属性列表不等长";
+                        offset[0] = end;
+                    }
+                }
+            });
+            if (offset[0] != sentence.length())
+            {
+                segmenter.segment(sentence.substring(offset[0]), normalized.substring(offset[0]), wordList);
+            }
+        }
+        else
+        {
+            segmenter.segment(sentence, normalized, wordList);
+        }
+    }
 
     @Override
     public void segment(final String sentence, final String normalized, final List<String> wordList)
@@ -113,7 +178,8 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
             return new Sentence(Collections.<IWord>emptyList());
         }
         final String normalized = CharTable.convert(sentence);
-        final List<String> wordList = segment(sentence, normalized);
+        List<String> wordList = new LinkedList<String>();
+        List<CoreDictionary.Attribute> attributeList = segmentWithAttribute(sentence, normalized, wordList);
 
         String[] wordArray = new String[wordList.size()];
         int offset = 0;
@@ -129,6 +195,16 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
         if (posTagger != null)
         {
             String[] posArray = tag(wordArray);
+            if (attributeList != null)
+            {
+                id = 0;
+                for (CoreDictionary.Attribute attribute : attributeList)
+                {
+                    if (attribute != null)
+                        posArray[id] = attribute.nature[0].toString();
+                    ++id;
+                }
+            }
             if (neRecognizer != null)
             {
                 String[] nerArray = neRecognizer.recognize(wordArray, posArray);
@@ -163,6 +239,7 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
             }
             else
             {
+                wordList.toArray(wordArray);
                 for (int i = 0; i < wordArray.length; i++)
                 {
                     termList.add(new Word(wordArray[i], posArray[i]));
@@ -171,6 +248,7 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
         }
         else
         {
+            wordList.toArray(wordArray);
             for (String word : wordArray)
             {
                 termList.add(new Word(word, null));
@@ -205,7 +283,7 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
      */
     protected boolean acceptCustomWord(int begin, int end, CoreDictionary.Attribute value)
     {
-        return end - begin >= 4 && !value.hasNatureStartsWith("nr") && !value.hasNatureStartsWith("ns") && !value.hasNatureStartsWith("nt");
+        return config.forceCustomDictionary || (end - begin >= 4 && !value.hasNatureStartsWith("nr") && !value.hasNatureStartsWith("ns") && !value.hasNatureStartsWith("nt"));
     }
 
     @Override
@@ -225,7 +303,8 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
         CharTable.normalization(sentence);
         String normalized = new String(sentence);
         List<String> wordList = new LinkedList<String>();
-        segment(original, normalized, wordList);
+        List<CoreDictionary.Attribute> attributeList;
+        attributeList = segmentWithAttribute(original, normalized, wordList);
         List<Term> termList = new ArrayList<Term>(wordList.size());
         int offset = 0;
         for (String word : wordList)
@@ -250,9 +329,20 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
                 }
                 String[] posArray = tag(wordArray);
                 Iterator<Term> iterator = termList.iterator();
-                for (String pos : posArray)
+                Iterator<CoreDictionary.Attribute> attributeIterator = attributeList == null ? null : attributeList.iterator();
+                for (int i = 0; i < posArray.length; i++)
                 {
-                    iterator.next().nature = Nature.create(pos);
+                    if (attributeIterator != null && attributeIterator.hasNext())
+                    {
+                        CoreDictionary.Attribute attribute = attributeIterator.next();
+                        if (attribute != null)
+                        {
+                            iterator.next().nature = attribute.nature[0]; // 使用词典中的词性
+                            posArray[i] = attribute.nature[0].toString(); // 覆盖词性标注器的结果
+                            continue;
+                        }
+                    }
+                    iterator.next().nature = Nature.create(posArray[i]);
                 }
 
                 if (config.ner && neRecognizer != null)
@@ -316,7 +406,7 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
                     }
                     if (result.length() != 0)
                     {
-                        Term term = new Term(result.toString(), Nature.create(posArray[posArray.length - 1]));
+                        Term term = new Term(result.toString(), Nature.create(prePos));
                         term.offset = offset;
                         termList.add(term);
                         if (childrenList != null)
@@ -342,7 +432,7 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
                     CoreDictionary.Attribute attribute = CoreDictionary.get(term.word);
                     if (attribute != null)
                     {
-                        term.nature = Nature.create(PosTagUtility.convert(attribute.nature[0]));
+                        term.nature = attribute.nature[0];
                     }
                     else
                     {
@@ -352,5 +442,29 @@ public abstract class AbstractLexicalAnalyzer extends CharacterBasedSegment impl
             }
         }
         return termList;
+    }
+
+    /**
+     * 返回用户词典中的attribute的分词
+     *
+     * @param original
+     * @param normalized
+     * @param wordList
+     * @return
+     */
+    private List<CoreDictionary.Attribute> segmentWithAttribute(String original, String normalized, List<String> wordList)
+    {
+        List<CoreDictionary.Attribute> attributeList;
+        if (config.useCustomDictionary && config.speechTagging && posTagger != null)
+        {
+            attributeList = new LinkedList<CoreDictionary.Attribute>();
+            segment(original, normalized, wordList, attributeList);
+        }
+        else
+        {
+            attributeList = null;
+            segment(original, normalized, wordList);
+        }
+        return attributeList;
     }
 }

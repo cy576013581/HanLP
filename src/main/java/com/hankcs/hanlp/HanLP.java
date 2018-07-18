@@ -161,31 +161,26 @@ public class HanLP
         public static String NNParserModelPath = "data/model/dependency/NNParserModel.txt";
         /**
          * CRF分词模型
+         *
+         * @deprecated 已废弃，请使用{@link com.hankcs.hanlp.model.crf.CRFLexicalAnalyzer}。未来版本将不再发布该模型，并删除配置项
          */
-        // @deprecated 已废弃，请使用{@link com.hankcs.hanlp.model.crf.CRFLexicalAnalyzer}。未来版本将不再发布该模型，并删除配置项
         public static String CRFSegmentModelPath = "data/model/segment/CRFSegmentModel.txt";
         /**
          * HMM分词模型
          */
         public static String HMMSegmentModelPath = "data/model/segment/HMMSegmentModel.bin";
         /**
-         * CRF依存模型
-         *
-         * @deprecated 已废弃，请使用{@link NeuralNetworkDependencyParser}
-         */
-        public static String CRFDependencyModelPath = "data/model/dependency/CRFDependencyModelMini.txt";
-        /**
          * CRF分词模型
          */
-        public static String CRFCWSModelPath = "data/model/crf/pku199801/cws.bin";
+        public static String CRFCWSModelPath = "data/model/crf/pku199801/cws.txt";
         /**
          * CRF词性标注模型
          */
-        public static String CRFPOSModelPath = "data/model/crf/pku199801/pos.bin";
+        public static String CRFPOSModelPath = "data/model/crf/pku199801/pos.txt";
         /**
          * CRF命名实体识别模型
          */
-        public static String CRFNERModelPath = "data/model/crf/pku199801/ner.bin";
+        public static String CRFNERModelPath = "data/model/crf/pku199801/ner.txt";
         /**
          * 感知机分词模型
          */
@@ -223,10 +218,25 @@ public class HanLP
                 {  // IKVM (v.0.44.0.5) doesn't set context classloader
                     loader = HanLP.Config.class.getClassLoader();
                 }
-                p.load(new InputStreamReader(Predefine.HANLP_PROPERTIES_PATH == null ?
-                                                 loader.getResourceAsStream("hanlp.properties") :
-                                                 new FileInputStream(Predefine.HANLP_PROPERTIES_PATH)
-                    , "UTF-8"));
+                try
+                {
+                    p.load(new InputStreamReader(Predefine.HANLP_PROPERTIES_PATH == null ?
+                                                     loader.getResourceAsStream("hanlp.properties") :
+                                                     new FileInputStream(Predefine.HANLP_PROPERTIES_PATH)
+                        , "UTF-8"));
+                }
+                catch (Exception e)
+                {
+                    String HANLP_ROOT = System.getenv("HANLP_ROOT");
+                    if (HANLP_ROOT != null)
+                    {
+                        HANLP_ROOT = HANLP_ROOT.trim();
+                        p = new Properties();
+                        p.setProperty("root", HANLP_ROOT);
+                        logger.info("使用环境变量 HANLP_ROOT=" + HANLP_ROOT);
+                    }
+                    else throw e;
+                }
                 String root = p.getProperty("root", "").replaceAll("\\\\", "/");
                 if (root.length() > 0 && !root.endsWith("/")) root += "/";
                 CoreDictionaryPath = root + p.getProperty("CoreDictionaryPath", CoreDictionaryPath);
@@ -271,7 +281,6 @@ public class HanLP
                 MaxEntModelPath = root + p.getProperty("MaxEntModelPath", MaxEntModelPath);
                 NNParserModelPath = root + p.getProperty("NNParserModelPath", NNParserModelPath);
                 CRFSegmentModelPath = root + p.getProperty("CRFSegmentModelPath", CRFSegmentModelPath);
-                CRFDependencyModelPath = root + p.getProperty("CRFDependencyModelPath", CRFDependencyModelPath);
                 HMMSegmentModelPath = root + p.getProperty("HMMSegmentModelPath", HMMSegmentModelPath);
                 CRFCWSModelPath = root + p.getProperty("CRFCWSModelPath", CRFCWSModelPath);
                 CRFPOSModelPath = root + p.getProperty("CRFPOSModelPath", CRFPOSModelPath);
@@ -311,26 +320,40 @@ public class HanLP
             }
             catch (Exception e)
             {
-                StringBuilder sbInfo = new StringBuilder("========Tips========\n请将hanlp.properties放在下列目录：\n"); // 打印一些友好的tips
-                String classPath = (String) System.getProperties().get("java.class.path");
-                if (classPath != null)
+                if (new File("data/dictionary/CoreNatureDictionary.tr.txt").isFile())
                 {
-                    for (String path : classPath.split(File.pathSeparator))
-                    {
-                        if (new File(path).isDirectory())
-                        {
-                            sbInfo.append(path).append('\n');
-                        }
-                    }
+                    logger.info("使用当前目录下的data");
                 }
-                sbInfo.append("Web项目则请放到下列目录：\n" +
-                                  "Webapp/WEB-INF/lib\n" +
-                                  "Webapp/WEB-INF/classes\n" +
-                                  "Appserver/lib\n" +
-                                  "JRE/lib\n");
-                sbInfo.append("并且编辑root=PARENT/path/to/your/data\n");
-                sbInfo.append("现在HanLP将尝试从").append(System.getProperties().get("user.dir")).append("读取data……");
-                logger.severe("没有找到hanlp.properties，可能会导致找不到data\n" + sbInfo);
+                else
+                {
+                    StringBuilder sbInfo = new StringBuilder("========Tips========\n请将hanlp.properties放在下列目录：\n"); // 打印一些友好的tips
+                    if (new File("src/main/java").isDirectory())
+                    {
+                        sbInfo.append("src/main/resources");
+                    }
+                    else
+                    {
+                        String classPath = (String) System.getProperties().get("java.class.path");
+                        if (classPath != null)
+                        {
+                            for (String path : classPath.split(File.pathSeparator))
+                            {
+                                if (new File(path).isDirectory())
+                                {
+                                    sbInfo.append(path).append('\n');
+                                }
+                            }
+                        }
+                        sbInfo.append("Web项目则请放到下列目录：\n" +
+                                          "Webapp/WEB-INF/lib\n" +
+                                          "Webapp/WEB-INF/classes\n" +
+                                          "Appserver/lib\n" +
+                                          "JRE/lib\n");
+                        sbInfo.append("并且编辑root=PARENT/path/to/your/data\n");
+                        sbInfo.append("现在HanLP将尝试从").append(System.getProperties().get("user.dir")).append("读取data……");
+                    }
+                    logger.severe("没有找到hanlp.properties，可能会导致找不到data\n" + sbInfo);
+                }
             }
         }
 

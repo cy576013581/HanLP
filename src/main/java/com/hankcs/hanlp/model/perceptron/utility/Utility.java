@@ -68,14 +68,14 @@ public class Utility
         }
     }
 
-    public static void shuffleArray(Instance[] ar)
+    public static <T> void shuffleArray(T[] ar)
     {
         Random rnd = new Random();
         for (int i = ar.length - 1; i > 0; i--)
         {
             int index = rnd.nextInt(i + 1);
             // Simple swap
-            Instance a = ar[index];
+            T a = ar[index];
             ar[index] = ar[i];
             ar[i] = a;
         }
@@ -311,6 +311,13 @@ public class Utility
         return stat;
     }
 
+    /**
+     * 将句子转换为 （单词，词性，NER标签）三元组
+     *
+     * @param sentence
+     * @param tagSet
+     * @return
+     */
     public static List<String[]> convertSentenceToNER(Sentence sentence, NERTagSet tagSet)
     {
         List<String[]> collector = new LinkedList<String[]>();
